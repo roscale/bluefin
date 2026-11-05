@@ -41,12 +41,26 @@ copr_install_isolated "ublue-os/packages" uupd
 
 echo "::endgroup::"
 
+echo "::group:: Install Belgian eID"
+
+# The eid-archive release package installs the repo definition and signing
+# key, so it must be installed before the packages that come from that repo.
+# dnf5 install on a URL replaces the manual `rpm -i`.
+dnf5 install -y https://eid.belgium.be/sites/default/files/software/eid-archive-fedora-2026-1.noarch.rpm
+dnf5 install -y firefox eid-viewer eid-mw
+
+echo "::endgroup::"
+
 echo "::group:: Enable update services"
 
 # Enable explicitly rather than relying on the shipped preset, matching how
 # 10-overlay.sh enables the Brew and Flatpak units.
 systemctl enable uupd.timer
 systemctl enable uupd-resume.timer
+
+# Smart card daemon, needed for the eID reader. Socket-activated, so it only
+# starts when something talks to the card reader.
+systemctl enable pcscd.socket
 
 echo "::endgroup::"
 
